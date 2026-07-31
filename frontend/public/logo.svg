@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <!-- Background Circle Fill -->
+    <radialGradient id="creamBg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFDF7" />
+      <stop offset="100%" stop-color="#FFF8EC" />
+    </radialGradient>
+
+    <!-- Gold Ring Gradient -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8C97D" />
+      <stop offset="50%" stop-color="#C79A3B" />
+      <stop offset="100%" stop-color="#A8771E" />
+    </linearGradient>
+
+    <!-- Text Path Arcs -->
+    <path id="topArc" d="M 65,250 A 185,185 0 1,1 435,250" fill="none" />
+    <path id="bottomArc" d="M 435,250 A 185,185 0 0,1 65,250" fill="none" />
+  </defs>
+
+  <!-- Outer Cream Circle Base -->
+  <circle cx="250" cy="250" r="240" fill="url(#creamBg)" />
+
+  <!-- Outer Thick Gold Ring -->
+  <circle cx="250" cy="250" r="235" fill="none" stroke="url(#goldGradient)" stroke-width="8" />
+
+  <!-- Inner Thin Gold Ring -->
+  <circle cx="250" cy="250" r="215" fill="none" stroke="url(#goldGradient)" stroke-width="3" />
+
+  <!-- Inner Content Circle Ring -->
+  <circle cx="250" cy="250" r="165" fill="none" stroke="url(#goldGradient)" stroke-width="2" />
+
+  <!-- Curved Text Top: SHIVA-KARTHIK -->
+  <text font-family="'Cinzel', Georgia, serif" font-size="28" font-weight="700" fill="#7A1F27" letter-spacing="4">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">
+      SHIVA-KARTHIK
+    </textPath>
+  </text>
+
+  <!-- Curved Text Bottom: GANESHA COLLECTIONS -->
+  <text font-family="'Cinzel', Georgia, serif" font-size="22" font-weight="700" fill="#7A1F27" letter-spacing="3">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">
+      GANESHA COLLECTIONS
+    </textPath>
+  </text>
+
+  <!-- Lord Ganesha Artistic Line Art Graphics -->
+  <g transform="translate(250, 245) scale(1.15)">
+    <!-- Crown / Mukut -->
+    <path d="M -12 -75 C -10 -90, 10 -90, 12 -75 C 18 -65, -18 -65, -12 -75 Z" fill="none" stroke="#7A1F27" stroke-width="3" />
+    <circle cx="0" cy="-82" r="5" fill="#C79A3B" />
+    <path d="M -20 -60 C -10 -70, 10 -70, 20 -60 C 25 -50, -25 -50, -20 -60 Z" fill="none" stroke="#D97A19" stroke-width="3" />
+
+    <!-- Head & Ears -->
+    <path d="M -25 -50 C -45 -40, -55 -20, -50 5 C -45 25, -25 35, -15 30" fill="none" stroke="#7A1F27" stroke-width="3.5" stroke-linecap="round" />
+    <path d="M 20 -50 C 45 -40, 60 -15, 50 15 C 40 35, 20 40, 5 35" fill="none" stroke="#7A1F27" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- Trunk (Sondh) Curved Gracefully -->
+    <path d="M -15 -30 C -25 0, -35 25, -20 45 C -5 60, 20 50, 25 30 C 28 15, 10 5, 0 20 C -5 30, 5 40, 15 35" fill="none" stroke="#D97A19" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Tilak / Tika -->
+    <path d="M 0 -45 L 0 -25" stroke="#7A1F27" stroke-width="3" stroke-linecap="round" />
+    <path d="M -8 -38 Q 0 -32 8 -38" stroke="#7A1F27" stroke-width="2.5" fill="none" />
+    <circle cx="0" cy="-48" r="3" fill="#7A1F27" />
+
+    <!-- Eye -->
+    <path d="M -18 -25 Q -10 -32 -2 -25 Q -10 -18 -18 -25 Z" fill="none" stroke="#7A1F27" stroke-width="2.5" />
+    <circle cx="-10" cy="-25" r="2.5" fill="#7A1F27" />
+
+    <!-- Blessing Abhaya Hasta Hand -->
+    <g transform="translate(-55, 10)">
+      <path d="M 0 30 C -10 20, -15 0, -10 -15 C -5 -25, 10 -25, 15 -10 C 20 5, 10 25, 0 30 Z" fill="none" stroke="#D97A19" stroke-width="3" stroke-linecap="round" />
+      <line x1="-2" y1="-8" x2="5" y2="-8" stroke="#C79A3B" stroke-width="2" />
+    </g>
+
+    <!-- Modak / Sweets Accent -->
+    <path d="M 30 25 C 25 15, 40 15, 35 25 Z" fill="#C79A3B" stroke="#7A1F27" stroke-width="1.5" />
+  </g>
+</svg>
