@@ -74,7 +74,7 @@ const createProduct = async (req, res, next) => {
       });
     }
 
-    const imageFilename = req.file ? req.file.filename : 'default_product.jpg';
+    const image = req.file ? req.file.path : 'default_product.jpg';
 
     const result = await runQuery(
       `INSERT INTO Products (name, category, price, description, image, stock, featured, hidden)
@@ -84,7 +84,7 @@ const createProduct = async (req, res, next) => {
         category,
         parseFloat(price),
         description,
-        imageFilename,
+        image,
         parseInt(stock || 0, 10),
         featured === 'true' || featured === '1' || featured === true ? 1 : 0,
         hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0
@@ -117,16 +117,10 @@ const updateProduct = async (req, res, next) => {
       });
     }
 
-    let imageFilename = existingProduct.image;
+    let image = existingProduct.image;
     if (req.file) {
-      // Remove old image if custom
-      if (existingProduct.image && !existingProduct.image.startsWith('sample_') && existingProduct.image !== 'default_product.jpg') {
-        const oldImagePath = path.join(__dirname, '../uploads/products', existingProduct.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
-      imageFilename = req.file.filename;
+      // Cloudinary images are not deleted from local disk
+      image = req.file.path;
     }
 
     const updatedName = name !== undefined ? name : existingProduct.name;

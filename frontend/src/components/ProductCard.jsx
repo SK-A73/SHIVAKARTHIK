@@ -6,9 +6,11 @@ const ProductCard = ({ product, onOrderNow }) => {
   const navigate = useNavigate();
 
   const imageUrl = product.image
-    ? product.image.startsWith('sample_')
-      ? `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop`
-      : `http://localhost:5000/uploads/products/${product.image}`
+    ? product.image.startsWith('http')
+      ? product.image
+      : product.image.startsWith('sample_')
+        ? `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop`
+        : `http://localhost:5000/uploads/products/${product.image}`
     : 'https://via.placeholder.com/400x300?text=No+Image';
 
   const isOutOfStock = product.stock <= 0;

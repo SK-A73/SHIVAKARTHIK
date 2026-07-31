@@ -406,9 +406,11 @@ const AdminDashboard = () => {
                     ) : (
                       products.map((p) => {
                         const img = p.image
-                          ? p.image.startsWith('sample_')
-                            ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop'
-                            : `http://localhost:5000/uploads/products/${p.image}`
+                          ? p.image.startsWith('http')
+                            ? p.image
+                            : p.image.startsWith('sample_')
+                              ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop'
+                              : `http://localhost:5000/uploads/products/${p.image}`
                           : 'https://via.placeholder.com/50';
 
                         return (

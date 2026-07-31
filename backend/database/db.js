@@ -1,69 +1,57 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
-const dbDir = path.join(__dirname);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
-
-const dbPath = path.join(dbDir, 'products.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Failed to connect to SQLite database:', err.message);
-  } else {
-    console.log('Connected to SQLite database at:', dbPath);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
   }
 });
 
-// Helper for db queries using promises
-const runQuery = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) reject(err);
-      else resolve(this);
-    });
-  });
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+// Helper to convert SQLite ? to Postgres $1, $2
+const formatSql = (sql) => {
+  let count = 1;
+  return sql.replace(/\?/g, () => `$${count++}`);
 };
 
-const getQuery = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+// Helper for db queries using async/await
+const runQuery = async (sql, params = []) => {
+  const result = await pool.query(formatSql(sql), params);
+  return result;
 };
 
-const allQuery = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
+const getQuery = async (sql, params = []) => {
+  const result = await pool.query(formatSql(sql), params);
+  return result.rows[0];
+};
+
+const allQuery = async (sql, params = []) => {
+  const result = await pool.query(formatSql(sql), params);
+  return result.rows;
 };
 
 const initDatabase = async () => {
   try {
-    // Enable foreign keys
-    await runQuery(`PRAGMA foreign_keys = ON;`);
-
     // Admins table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS Admins (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     // Products table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS Products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         price REAL NOT NULL,
@@ -72,8 +60,8 @@ const initDatabase = async () => {
         stock INTEGER DEFAULT 0,
         featured INTEGER DEFAULT 0,
         hidden INTEGER DEFAULT 0,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -85,16 +73,16 @@ const initDatabase = async () => {
         phone TEXT NOT NULL,
         status TEXT DEFAULT 'Pending',
         totalAmount REAL NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
     // OrderItems table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS OrderItems (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         orderId TEXT NOT NULL,
-        productId INTEGER NOT NULL,
+        productId INTEGER,
         productName TEXT NOT NULL,
         quantity INTEGER NOT NULL,
         price REAL NOT NULL,
@@ -107,7 +95,7 @@ const initDatabase = async () => {
     // Settings table
     await runQuery(`
       CREATE TABLE IF NOT EXISTS Settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         shopName TEXT NOT NULL,
         whatsappNumber TEXT NOT NULL,
         address TEXT,
@@ -119,10 +107,10 @@ const initDatabase = async () => {
     `);
 
     // Seed default admin if not exists
-    const adminExist = await getQuery(`SELECT * FROM Admins WHERE username = ?`, ['admin']);
+    const adminExist = await getQuery(`SELECT * FROM Admins WHERE username = $1`, ['admin']);
     if (!adminExist) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
-      await runQuery(`INSERT INTO Admins (username, password) VALUES (?, ?)`, ['admin', hashedPassword]);
+      await runQuery(`INSERT INTO Admins (username, password) VALUES ($1, $2)`, ['admin', hashedPassword]);
       console.log('Seeded default admin account (admin / admin123)');
     }
 
@@ -131,7 +119,7 @@ const initDatabase = async () => {
     if (!settingsExist) {
       await runQuery(`
         INSERT INTO Settings (shopName, whatsappNumber, address, instagram, facebook, logo, banner)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
       `, [
         'SHIVA KARTHIK GANESHA COLLECTIONS',
         '919148572774',
@@ -144,18 +132,18 @@ const initDatabase = async () => {
       console.log('Seeded default shop settings');
     } else {
       // Ensure target WhatsApp number is updated to 919148572774
-      await runQuery(`UPDATE Settings SET whatsappNumber = ? WHERE id = ?`, ['919148572774', settingsExist.id]);
+      await runQuery(`UPDATE Settings SET whatsappNumber = $1 WHERE id = $2`, ['919148572774', settingsExist.id]);
     }
 
     // Seed sample products if empty
     const productCount = await getQuery(`SELECT COUNT(*) as count FROM Products`);
-    if (productCount.count === 0) {
+    if (parseInt(productCount.count) === 0) {
       await runQuery(`
         INSERT INTO Products (name, category, price, description, image, stock, featured, hidden)
         VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?),
-        (?, ?, ?, ?, ?, ?, ?, ?),
-        (?, ?, ?, ?, ?, ?, ?, ?)
+        ($1, $2, $3, $4, $5, $6, $7, $8),
+        ($9, $10, $11, $12, $13, $14, $15, $16),
+        ($17, $18, $19, $20, $21, $22, $23, $24)
       `, [
         'Premium Silk Saree', 'Clothing', 1250.00, 'Handcrafted authentic silk saree with intricate traditional patterns and vibrant finish.', 'sample_saree.jpg', 25, 1, 0,
         'Wireless Noise Cancelling Headphones', 'Electronics', 3499.00, 'High fidelity audio headphones with active noise cancellation and 30hr battery life.', 'sample_headphones.jpg', 15, 1, 0,
@@ -163,16 +151,23 @@ const initDatabase = async () => {
       ]);
       console.log('Seeded sample products');
     }
+    
+    console.log('Connected to PostgreSQL database and schema initialized successfully.');
 
   } catch (error) {
     console.error('Database initialization error:', error.message);
   }
 };
 
-initDatabase();
+// Don't auto-initialize if there's a placeholder password (it will crash)
+if (!process.env.DATABASE_URL.includes('[YOUR-PASSWORD]')) {
+    initDatabase();
+} else {
+    console.warn('⚠️ PostgreSQL initialization skipped. Replace [YOUR-PASSWORD] in .env file.');
+}
 
 module.exports = {
-  db,
+  pool,
   runQuery,
   getQuery,
   allQuery
