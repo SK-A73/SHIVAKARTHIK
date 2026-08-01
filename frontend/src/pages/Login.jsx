@@ -65,7 +65,7 @@ const Login = () => {
               </label>
               <input
                 type="text"
-                placeholder="admin"
+                placeholder="karthik"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 style={{ width: '100%' }}
@@ -96,10 +96,6 @@ const Login = () => {
               {loading ? 'Authenticating...' : <><Lock size={18} /> Sign In to Dashboard</>}
             </button>
           </form>
-
-          <div style={{ marginTop: '2.25rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--color-text-light)', borderTop: '1px solid rgba(199,154,59,0.2)', paddingTop: '1.25rem' }}>
-            Default credentials: <strong style={{ color: 'var(--color-maroon)' }}>admin / admin123</strong>
-          </div>
         </div>
       </main>
 
