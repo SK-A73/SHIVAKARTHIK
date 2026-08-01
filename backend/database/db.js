@@ -56,7 +56,8 @@ const initDatabase = async () => {
         category TEXT NOT NULL,
         price REAL NOT NULL,
         description TEXT NOT NULL,
-        image TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        cloudinary_public_id TEXT,
         stock INTEGER DEFAULT 0,
         featured INTEGER DEFAULT 0,
         hidden INTEGER DEFAULT 0,
@@ -139,7 +140,7 @@ const initDatabase = async () => {
     const productCount = await getQuery(`SELECT COUNT(*) as count FROM Products`);
     if (parseInt(productCount.count) === 0) {
       await runQuery(`
-        INSERT INTO Products (name, category, price, description, image, stock, featured, hidden)
+        INSERT INTO Products (name, category, price, description, image_url, stock, featured, hidden)
         VALUES 
         ($1, $2, $3, $4, $5, $6, $7, $8),
         ($9, $10, $11, $12, $13, $14, $15, $16),

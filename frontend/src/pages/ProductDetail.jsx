@@ -75,13 +75,13 @@ const ProductDetail = () => {
     );
   }
 
-  const imageUrl = product.image
-    ? product.image.startsWith('http')
-      ? product.image
-      : product.image.startsWith('sample_')
-        ? `https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop`
-        : `http://localhost:5000/uploads/products/${product.image}`
-    : 'https://via.placeholder.com/600x400?text=No+Image';
+  const imageUrl = product.image_url
+    ? product.image_url.startsWith('http')
+      ? product.image_url
+      : product.image_url.startsWith('sample_')
+        ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop'
+        : `http://localhost:5000/uploads/products/${product.image_url}`
+    : 'https://via.placeholder.com/600?text=No+Image';
 
   const isOutOfStock = product.stock <= 0;
 

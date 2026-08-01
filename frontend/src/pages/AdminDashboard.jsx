@@ -405,12 +405,12 @@ const AdminDashboard = () => {
                       </tr>
                     ) : (
                       products.map((p) => {
-                        const img = p.image
-                          ? p.image.startsWith('http')
-                            ? p.image
-                            : p.image.startsWith('sample_')
+                        const img = p.image_url
+                          ? p.image_url.startsWith('http')
+                            ? p.image_url
+                            : p.image_url.startsWith('sample_')
                               ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop'
-                              : `http://localhost:5000/uploads/products/${p.image}`
+                              : `http://localhost:5000/uploads/products/${p.image_url}`
                           : 'https://via.placeholder.com/50';
 
                         return (
@@ -705,12 +705,28 @@ const AdminDashboard = () => {
 
               <div style={{ marginBottom: '1.25rem' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text)', marginBottom: '0.3rem', fontWeight: 600 }}>Product Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setProductImageFile(e.target.files[0])}
-                  style={{ width: '100%', padding: '0.4rem' }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {(productImageFile || editingProduct?.image_url) && (
+                    <img 
+                      src={productImageFile ? URL.createObjectURL(productImageFile) : (editingProduct.image_url.startsWith('http') ? editingProduct.image_url : `http://localhost:5000/uploads/products/${editingProduct.image_url}`)} 
+                      alt="Preview" 
+                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--color-gold-primary)' }} 
+                    />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    onChange={(e) => {
+                      if (e.target.files[0] && e.target.files[0].size > 10 * 1024 * 1024) {
+                        alert('Image size exceeds 10MB limit.');
+                        e.target.value = '';
+                        return;
+                      }
+                      setProductImageFile(e.target.files[0]);
+                    }}
+                    style={{ flex: 1, padding: '0.4rem' }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.75rem' }}>

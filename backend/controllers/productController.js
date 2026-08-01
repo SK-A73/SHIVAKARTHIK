@@ -74,17 +74,19 @@ const createProduct = async (req, res, next) => {
       });
     }
 
-    const image = req.file ? req.file.path : 'default_product.jpg';
+    const image_url = req.file ? req.file.path : 'default_product.jpg';
+    const cloudinary_public_id = req.file ? req.file.filename : null;
 
     const result = await runQuery(
-      `INSERT INTO Products (name, category, price, description, image, stock, featured, hidden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      `INSERT INTO Products (name, category, price, description, image_url, cloudinary_public_id, stock, featured, hidden)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         name,
         category,
         parseFloat(price),
         description,
-        image,
+        image_url,
+        cloudinary_public_id,
         parseInt(stock || 0, 10),
         featured === 'true' || featured === '1' || featured === true ? 1 : 0,
         hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0
@@ -117,25 +119,31 @@ const updateProduct = async (req, res, next) => {
       });
     }
 
-    let image = existingProduct.image;
+    let image_url = existingProduct.image_url;
+    let cloudinary_public_id = existingProduct.cloudinary_public_id;
+    
     if (req.file) {
-      // Cloudinary images are not deleted from local disk
-      image = req.file.path;
+      // Delete old image from Cloudinary
+      if (existingProduct.cloudinary_public_id) {
+        const cloudinary = require('cloudinary').v2;
+        await cloudinary.uploader.destroy(existingProduct.cloudinary_public_id);
+      }
+      
+      image_url = req.file.path;
+      cloudinary_public_id = req.file.filename;
     }
 
     const updatedName = name !== undefined ? name : existingProduct.name;
     const updatedCategory = category !== undefined ? category : existingProduct.category;
     const updatedPrice = price !== undefined ? parseFloat(price) : existingProduct.price;
-    const updatedDescription = description !== undefined ? description : existingProduct.description;
+    const updatedDesc = description !== undefined ? description : existingProduct.description;
     const updatedStock = stock !== undefined ? parseInt(stock, 10) : existingProduct.stock;
     const updatedFeatured = featured !== undefined ? (featured === 'true' || featured === '1' || featured === true ? 1 : 0) : existingProduct.featured;
     const updatedHidden = hidden !== undefined ? (hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0) : existingProduct.hidden;
 
     await runQuery(
-      `UPDATE Products 
-       SET name = ?, category = ?, price = ?, description = ?, image = ?, stock = ?, featured = ?, hidden = ?, updatedAt = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [updatedName, updatedCategory, updatedPrice, updatedDescription, imageFilename, updatedStock, updatedFeatured, updatedHidden, id]
+      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, "updatedAt" = CURRENT_TIMESTAMP WHERE id = ?`,
+      [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, cloudinary_public_id, updatedStock, updatedFeatured, updatedHidden, id]
     );
 
     const updatedProduct = await getQuery(`SELECT * FROM Products WHERE id = ?`, [id]);
@@ -167,6 +175,11 @@ const deleteProduct = async (req, res, next) => {
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
       }
+    }
+
+    if (product.cloudinary_public_id) {
+      const cloudinary = require('cloudinary').v2;
+      await cloudinary.uploader.destroy(product.cloudinary_public_id);
     }
 
     await runQuery(`DELETE FROM Products WHERE id = ?`, [id]);
