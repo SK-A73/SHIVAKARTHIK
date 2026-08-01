@@ -65,7 +65,7 @@ const Login = () => {
               </label>
               <input
                 type="text"
-                placeholder="karthik"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 style={{ width: '100%' }}
