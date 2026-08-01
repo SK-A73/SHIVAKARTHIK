@@ -144,7 +144,7 @@ const getAllOrders = async (req, res, next) => {
       params.push(status);
     }
 
-    sql += ` ORDER BY createdAt DESC`;
+    sql += ` ORDER BY "createdAt" DESC`;
 
     const orders = await allQuery(sql, params);
 

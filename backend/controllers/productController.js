@@ -28,7 +28,7 @@ const getAllProducts = async (req, res, next) => {
       sql += ` AND featured = 1`;
     }
 
-    sql += ` ORDER BY createdAt DESC`;
+    sql += ` ORDER BY "createdAt" DESC`;
 
     const products = await allQuery(sql, params);
 
