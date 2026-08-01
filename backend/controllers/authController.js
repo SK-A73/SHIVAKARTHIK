@@ -53,7 +53,7 @@ const login = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
   try {
-    const admin = await getQuery(`SELECT id, username, createdAt FROM Admins WHERE id = ?`, [req.admin.id]);
+    const admin = await getQuery(`SELECT id, username, "createdAt" FROM Admins WHERE id = ?`, [req.admin.id]);
     if (!admin) {
       return res.status(404).json({
         success: false,

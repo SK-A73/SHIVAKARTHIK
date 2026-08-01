@@ -78,7 +78,7 @@ const createProduct = async (req, res, next) => {
 
     const result = await runQuery(
       `INSERT INTO Products (name, category, price, description, image, stock, featured, hidden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         name,
         category,
@@ -91,7 +91,7 @@ const createProduct = async (req, res, next) => {
       ]
     );
 
-    const createdProduct = await getQuery(`SELECT * FROM Products WHERE id = ?`, [result.lastID]);
+    const createdProduct = await getQuery(`SELECT * FROM Products WHERE id = ?`, [result.rows[0].id]);
 
     return res.status(201).json({
       success: true,
