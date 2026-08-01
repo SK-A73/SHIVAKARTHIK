@@ -56,14 +56,14 @@ const createOrder = async (req, res, next) => {
 
     // Insert Order
     await runQuery(
-      `INSERT INTO Orders (id, customerName, phone, status, totalAmount)
+      `INSERT INTO Orders (id, "customerName", phone, status, "totalAmount")
        VALUES (?, ?, ?, 'Pending', ?)`,
       [orderId, customerName, phone, itemTotal]
     );
 
     // Insert OrderItem
     await runQuery(
-      `INSERT INTO OrderItems (orderId, productId, productName, quantity, price, total)
+      `INSERT INTO OrderItems ("orderId", "productId", "productName", quantity, price, total)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [orderId, product.id, product.name, qty, product.price, itemTotal]
     );
@@ -134,7 +134,7 @@ const getAllOrders = async (req, res, next) => {
     const params = [];
 
     if (search) {
-      sql += ` AND (id LIKE ? OR customerName LIKE ? OR phone LIKE ?)`;
+      sql += ` AND (id LIKE ? OR "customerName" LIKE ? OR phone LIKE ?)`;
       const searchTerm = `%${search}%`;
       params.push(searchTerm, searchTerm, searchTerm);
     }
@@ -150,7 +150,7 @@ const getAllOrders = async (req, res, next) => {
 
     // Attach items for each order
     for (let order of orders) {
-      order.items = await allQuery(`SELECT * FROM OrderItems WHERE orderId = ?`, [order.id]);
+      order.items = await allQuery(`SELECT * FROM OrderItems WHERE "orderId" = ?`, [order.id]);
     }
 
     return res.status(200).json({
@@ -175,7 +175,7 @@ const getOrderById = async (req, res, next) => {
       });
     }
 
-    order.items = await allQuery(`SELECT * FROM OrderItems WHERE orderId = ?`, [id]);
+    order.items = await allQuery(`SELECT * FROM OrderItems WHERE "orderId" = ?`, [id]);
 
     return res.status(200).json({
       success: true,
