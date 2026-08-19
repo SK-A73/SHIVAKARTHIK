@@ -1,6 +1,4 @@
 const { runQuery, getQuery, allQuery } = require('../database/db');
-const fs = require('fs');
-const path = require('path');
 const { uploadToSupabase, deleteFromSupabase } = require('../config/supabase');
 
 const getAllProducts = async (req, res, next) => {
@@ -29,7 +27,7 @@ const getAllProducts = async (req, res, next) => {
       sql += ` AND featured = 1`;
     }
 
-    sql += ` ORDER BY createdAt DESC`;
+    sql += ` ORDER BY createdat DESC`;
 
     const products = await allQuery(sql, params);
 
@@ -75,9 +73,33 @@ const createProduct = async (req, res, next) => {
       });
     }
 
-    const image_url = req.file ? req.file.path : 'default_product.jpg';
-    const cloudinary_public_id = req.file ? req.file.filename : null;
+    // --- STEP 1: Upload image to Supabase Storage FIRST ---
+    let image_url = null;
+    let storage_path = null;
 
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToSupabase(req.file);
+        image_url = uploadResult.url;
+        storage_path = uploadResult.path;
+      } catch (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Image upload failed. Product was not created. Please try again.'
+        });
+      }
+    }
+
+    // --- STEP 2: Validate that we have a real URL before inserting ---
+    if (!image_url || typeof image_url !== 'string' || image_url.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'A product image is required. Please select an image and try again.'
+      });
+    }
+
+    // --- STEP 3: Insert product into PostgreSQL with the Supabase Storage URL ---
     const result = await runQuery(
       `INSERT INTO Products (name, category, price, description, image_url, cloudinary_public_id, stock, featured, hidden)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
@@ -87,7 +109,7 @@ const createProduct = async (req, res, next) => {
         parseFloat(price),
         description,
         image_url,
-        cloudinary_public_id,
+        storage_path,
         parseInt(stock || 0, 10),
         featured === 'true' || featured === '1' || featured === true ? 1 : 0,
         hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0
@@ -120,18 +142,39 @@ const updateProduct = async (req, res, next) => {
       });
     }
 
+    // Keep existing image by default
     let image_url = existingProduct.image_url;
-    let cloudinary_public_id = existingProduct.cloudinary_public_id;
-    
+    let storage_path = existingProduct.cloudinary_public_id;
+
+    // Only upload if a new file was provided
     if (req.file) {
-      // Delete old image from Cloudinary
-      if (existingProduct.cloudinary_public_id) {
-        const cloudinary = require('cloudinary').v2;
-        await cloudinary.uploader.destroy(existingProduct.cloudinary_public_id);
+      try {
+        const uploadResult = await uploadToSupabase(req.file);
+        const newImageUrl = uploadResult.url;
+        const newStoragePath = uploadResult.path;
+
+        // Validate new URL before proceeding
+        if (!newImageUrl || typeof newImageUrl !== 'string' || newImageUrl.trim() === '') {
+          return res.status(500).json({
+            success: false,
+            message: 'New image upload failed. Product was not updated.'
+          });
+        }
+
+        // Delete old image from Supabase Storage if it was stored there
+        if (existingProduct.cloudinary_public_id && existingProduct.cloudinary_public_id.startsWith('products/')) {
+          await deleteFromSupabase(existingProduct.cloudinary_public_id);
+        }
+
+        image_url = newImageUrl;
+        storage_path = newStoragePath;
+      } catch (uploadError) {
+        console.error('Supabase upload error during update:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Image upload failed. Product was not updated. Please try again.'
+        });
       }
-      
-      image_url = req.file.path;
-      cloudinary_public_id = req.file.filename;
     }
 
     const updatedName = name !== undefined ? name : existingProduct.name;
@@ -143,8 +186,8 @@ const updateProduct = async (req, res, next) => {
     const updatedHidden = hidden !== undefined ? (hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0) : existingProduct.hidden;
 
     await runQuery(
-      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-      [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, cloudinary_public_id, updatedStock, updatedFeatured, updatedHidden, id]
+      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, updatedat = CURRENT_TIMESTAMP WHERE id = ?`,
+      [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, storage_path, updatedStock, updatedFeatured, updatedHidden, id]
     );
 
     const updatedProduct = await getQuery(`SELECT * FROM Products WHERE id = ?`, [id]);
@@ -171,16 +214,9 @@ const deleteProduct = async (req, res, next) => {
       });
     }
 
-    if (product.image && !product.image.startsWith('sample_') && product.image !== 'default_product.jpg') {
-      const imagePath = path.join(__dirname, '../uploads/products', product.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
-
-    if (product.cloudinary_public_id) {
-      const cloudinary = require('cloudinary').v2;
-      await cloudinary.uploader.destroy(product.cloudinary_public_id);
+    // Delete image from Supabase Storage if it was stored there
+    if (product.cloudinary_public_id && product.cloudinary_public_id.startsWith('products/')) {
+      await deleteFromSupabase(product.cloudinary_public_id);
     }
 
     await runQuery(`DELETE FROM Products WHERE id = ?`, [id]);
@@ -209,7 +245,7 @@ const toggleVisibility = async (req, res, next) => {
     const newHiddenState = product.hidden === 1 ? 0 : 1;
 
     await runQuery(
-      `UPDATE Products SET hidden = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+      `UPDATE Products SET hidden = ?, updatedat = CURRENT_TIMESTAMP WHERE id = ?`,
       [newHiddenState, id]
     );
 
