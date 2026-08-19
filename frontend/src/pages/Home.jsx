@@ -12,22 +12,22 @@ const Home = () => {
   // Restore scroll position when returning from Product Detail
   useScrollRestoration();
 
-  // Restore state from sessionStorage if it exists, otherwise use defaults
-  const [products, setProducts] = useState(() => {
-    const saved = sessionStorage.getItem('shop_products');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [categories, setCategories] = useState(() => {
-    const saved = sessionStorage.getItem('shop_categories');
-    return saved ? JSON.parse(saved) : ['All'];
-  });
-  const [selectedCategory, setSelectedCategory] = useState(() => sessionStorage.getItem('shop_selectedCategory') || 'All');
-  const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('shop_searchTerm') || '');
-  const [loading, setLoading] = useState(products.length === 0);
+  // Products always come fresh from the API — never cached
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['All']);
+  const [loading, setLoading] = useState(true);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState(null);
   const [settings, setSettings] = useState(null);
 
-  // Save state whenever it changes
+  // Preserve filter state in sessionStorage so Back navigation keeps the selection
+  const [selectedCategory, setSelectedCategory] = useState(
+    () => sessionStorage.getItem('shop_selectedCategory') || 'All'
+  );
+  const [searchTerm, setSearchTerm] = useState(
+    () => sessionStorage.getItem('shop_searchTerm') || ''
+  );
+
+  // Persist filter choices whenever they change
   useEffect(() => {
     sessionStorage.setItem('shop_selectedCategory', selectedCategory);
   }, [selectedCategory]);
@@ -36,11 +36,10 @@ const Home = () => {
     sessionStorage.setItem('shop_searchTerm', searchTerm);
   }, [searchTerm]);
 
+  // Always fetch fresh product data on every mount
   useEffect(() => {
     fetchSettings();
-    if (products.length === 0) {
-      fetchProducts();
-    }
+    fetchProducts();
   }, []);
 
   const fetchSettings = async () => {
@@ -60,10 +59,8 @@ const Home = () => {
       const res = await API.get('/products');
       if (res.data.success) {
         setProducts(res.data.products);
-        sessionStorage.setItem('shop_products', JSON.stringify(res.data.products));
         const uniqueCategories = ['All', ...new Set(res.data.products.map(p => p.category))];
         setCategories(uniqueCategories);
-        sessionStorage.setItem('shop_categories', JSON.stringify(uniqueCategories));
       }
     } catch (err) {
       console.error('Error fetching products:', err);
