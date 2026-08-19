@@ -348,16 +348,17 @@ input:focus, select:focus, textarea:focus {
     justify-content: space-between;
     text-align: left;
   }
-  /* Row 1: logo (left) + admin button (right) — full width */
+  /* Row 1: logo (left) + admin button (right) */
   .navbar-inner > a:first-child {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
     padding-bottom: 0.6rem;
   }
-  /* Keep nav-links (admin btn) pinned to the right */
+  /* Keep nav-links (admin btn) pinned to the absolute right */
   .nav-links {
     flex: 0 0 auto;
     gap: 0;
+    margin-left: auto !important; /* Forces it to the right */
     justify-content: flex-end;
     width: auto;
     padding-bottom: 0.6rem;
