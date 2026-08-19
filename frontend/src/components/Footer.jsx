@@ -6,7 +6,7 @@ const Footer = () => {
   return (
     <footer className="footer-luxury">
       <div className="container">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3.5rem', marginBottom: '3rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '2.5rem', marginBottom: '3rem' }}>
 
           {/* LEFT COLUMN — Brand Information */}
           <div>

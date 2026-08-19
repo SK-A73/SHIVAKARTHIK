@@ -475,6 +475,10 @@
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+  .product-detail-gallery {
+    min-height: 280px;
+    max-height: 380px;
+  }
   .navbar-inner {
     flex-wrap: wrap;
   }
@@ -483,3 +487,17 @@
     align-items: stretch;
   }
 }
+
+.category-pill-list {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.category-pill-list::-webkit-scrollbar {
+  display: none;
+}
+

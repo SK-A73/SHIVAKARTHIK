@@ -264,13 +264,14 @@ const AdminDashboard = () => {
 
       <main className="main-content">
         <div className="container" style={{ paddingTop: '2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--color-gold-primary)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid var(--color-gold-primary)' }}>
             <div>
               <h1 style={{ fontSize: '2.25rem', fontFamily: 'var(--font-heading)', color: 'var(--color-maroon)' }}>Admin Dashboard</h1>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
                 Manage Ganesha idol catalog, customer orders, and store parameters
               </p>
             </div>
+
             <button
               onClick={() => {
                 logout();

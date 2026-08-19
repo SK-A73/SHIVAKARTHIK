@@ -118,33 +118,36 @@ const OrderModal = ({ product, onClose }) => {
             <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text)', marginBottom: '0.4rem', fontWeight: 600 }}>
               Quantity *
             </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-sm)', background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Minus size={18} />
-              </button>
-              <input
-                type="number"
-                min="1"
-                max={product.stock}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, parseInt(e.target.value) || 1)))}
-                style={{ width: '90px', textAlign: 'center', fontWeight: 700, fontSize: '1.1rem' }}
-              />
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-sm)', background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Plus size={18} />
-              </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-sm)', background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Minus size={18} />
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={product.stock}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, parseInt(e.target.value) || 1)))}
+                  style={{ width: '80px', textAlign: 'center', fontWeight: 700, fontSize: '1.1rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+                  style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-sm)', background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Plus size={18} />
+                </button>
+              </div>
               <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
                 Stock Available: {product.stock}
               </span>
             </div>
+
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1.5rem 0', padding: '1.15rem 0', borderTop: '1px solid rgba(199, 154, 59, 0.25)', borderBottom: '1px solid rgba(199, 154, 59, 0.25)' }}>
