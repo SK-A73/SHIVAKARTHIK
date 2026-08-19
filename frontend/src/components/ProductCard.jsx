@@ -56,44 +56,51 @@ const ProductCard = ({ product, onOrderNow }) => {
         </h3>
         <p className="product-card-description">{product.description}</p>
 
-        <div className="product-card-bottom">
-          <div className="product-card-price-tag">₹{product.price.toLocaleString('en-IN')}</div>
+        <div className="product-card-bottom" style={{ gap: '0.4rem' }}>
+          <div className="product-card-price-tag" style={{ fontSize: '1.25rem', whiteSpace: 'nowrap' }}>
+            ₹{product.price.toLocaleString('en-IN')}
+          </div>
           
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
             <button
               onClick={() => navigate(`/product/${product.id}`)}
               style={{
                 background: 'var(--color-cream)',
                 border: '1px solid var(--color-gold-primary)',
                 color: 'var(--color-maroon)',
-                padding: '0.5rem 0.75rem',
+                padding: '0.35rem 0.6rem',
                 borderRadius: 'var(--radius-sm)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.3rem',
-                fontSize: '0.85rem',
-                fontWeight: 600
+                gap: '0.25rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                whiteSpace: 'nowrap'
               }}
               title="View Details"
             >
-              <Eye size={15} /> Details
+              <Eye size={14} /> Details
             </button>
 
             <button
               className="btn-gold-primary"
               disabled={isOutOfStock}
               style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.85rem',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.8rem',
                 opacity: isOutOfStock ? 0.5 : 1,
-                cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
               }}
               onClick={(e) => {
                 e.stopPropagation();
                 onOrderNow(product);
               }}
             >
-              <ShoppingCart size={15} /> Order Now
+              <ShoppingCart size={14} /> Order Now
             </button>
           </div>
         </div>
