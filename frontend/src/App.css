@@ -13,14 +13,9 @@
   z-index: 1;
 }
 
-/* Cream Luxury Navbar */
+/* Cream Luxury Navbar (Not sticky) */
 .navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255, 253, 247, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 253, 247, 1);
   border-bottom: 2px solid var(--color-gold-primary);
   padding: 0.85rem 0;
   box-shadow: 0 4px 20px rgba(168, 119, 30, 0.08);
@@ -30,6 +25,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
   gap: 1.5rem;
 }
 
@@ -184,8 +185,6 @@
 
 .search-input-wrap {
   position: relative;
-  flex: 1;
-  min-width: 280px;
 }
 
 .search-input-wrap input {
