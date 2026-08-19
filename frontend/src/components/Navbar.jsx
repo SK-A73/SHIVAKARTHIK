@@ -44,7 +44,7 @@ const Navbar = ({ onSearchChange, searchTerm }) => {
         )}
 
         <div className="nav-links">
-          <Link to="/" className="nav-link">
+          <Link to="/" className="nav-link nav-catalog-link">
             <ShoppingBag size={18} color="var(--color-gold-deep)" /> Catalog
           </Link>
 
