@@ -176,6 +176,10 @@
   justify-content: space-between;
   gap: 1.25rem;
   box-shadow: var(--shadow-card);
+  /* Prevent container from growing wider than viewport */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .search-input-wrap {
@@ -203,9 +207,14 @@
 
 .category-pill-list {
   display: flex;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   overflow-x: auto;
   padding-bottom: 0.2rem;
+  /* Critical: prevents flex child from growing beyond its parent */
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .category-pill {
@@ -488,11 +497,8 @@
   }
 }
 
+/* Touch scrolling & hide scrollbar for category pills */
 .category-pill-list {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.2rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -501,3 +507,7 @@
   display: none;
 }
 
+/* Each pill must never shrink or wrap */
+.category-pill {
+  flex: 0 0 auto;
+}
