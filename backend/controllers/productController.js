@@ -1,6 +1,7 @@
 const { runQuery, getQuery, allQuery } = require('../database/db');
 const fs = require('fs');
 const path = require('path');
+const { uploadToSupabase, deleteFromSupabase } = require('../config/supabase');
 
 const getAllProducts = async (req, res, next) => {
   try {
@@ -28,7 +29,7 @@ const getAllProducts = async (req, res, next) => {
       sql += ` AND featured = 1`;
     }
 
-    sql += ` ORDER BY "createdAt" DESC`;
+    sql += ` ORDER BY createdAt DESC`;
 
     const products = await allQuery(sql, params);
 
@@ -142,7 +143,7 @@ const updateProduct = async (req, res, next) => {
     const updatedHidden = hidden !== undefined ? (hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0) : existingProduct.hidden;
 
     await runQuery(
-      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, "updatedAt" = CURRENT_TIMESTAMP WHERE id = ?`,
+      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
       [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, cloudinary_public_id, updatedStock, updatedFeatured, updatedHidden, id]
     );
 

@@ -411,7 +411,7 @@ const AdminDashboard = () => {
                             ? p.image_url
                             : p.image_url.startsWith('sample_')
                               ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop'
-                              : `http://localhost:5000/uploads/products/${p.image_url}`
+                              : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://shivakarthik.onrender.com'}/uploads/products/${p.image_url}`
                           : 'https://via.placeholder.com/50';
 
                         return (
@@ -709,7 +709,7 @@ const AdminDashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {(productImageFile || editingProduct?.image_url) && (
                     <img 
-                      src={productImageFile ? URL.createObjectURL(productImageFile) : (editingProduct.image_url.startsWith('http') ? editingProduct.image_url : `http://localhost:5000/uploads/products/${editingProduct.image_url}`)} 
+                      src={productImageFile ? URL.createObjectURL(productImageFile) : (editingProduct.image_url.startsWith('http') ? editingProduct.image_url : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://shivakarthik.onrender.com'}/uploads/products/${editingProduct.image_url}`)} 
                       alt="Preview" 
                       style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--color-gold-primary)' }} 
                     />

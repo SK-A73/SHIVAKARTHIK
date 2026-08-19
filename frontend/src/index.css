@@ -59,7 +59,6 @@ body {
   background-color: var(--bg-main);
   color: var(--color-text);
   min-height: 100vh;
-  overflow-x: hidden;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   background-image: 

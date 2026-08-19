@@ -12,17 +12,35 @@ const Home = () => {
   // Restore scroll position when returning from Product Detail
   useScrollRestoration();
 
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  // Restore state from sessionStorage if it exists, otherwise use defaults
+  const [products, setProducts] = useState(() => {
+    const saved = sessionStorage.getItem('shop_products');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [categories, setCategories] = useState(() => {
+    const saved = sessionStorage.getItem('shop_categories');
+    return saved ? JSON.parse(saved) : ['All'];
+  });
+  const [selectedCategory, setSelectedCategory] = useState(() => sessionStorage.getItem('shop_selectedCategory') || 'All');
+  const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('shop_searchTerm') || '');
+  const [loading, setLoading] = useState(products.length === 0);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState(null);
   const [settings, setSettings] = useState(null);
 
+  // Save state whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem('shop_selectedCategory', selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem('shop_searchTerm', searchTerm);
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchSettings();
-    fetchProducts();
+    if (products.length === 0) {
+      fetchProducts();
+    }
   }, []);
 
   const fetchSettings = async () => {
@@ -42,8 +60,10 @@ const Home = () => {
       const res = await API.get('/products');
       if (res.data.success) {
         setProducts(res.data.products);
+        sessionStorage.setItem('shop_products', JSON.stringify(res.data.products));
         const uniqueCategories = ['All', ...new Set(res.data.products.map(p => p.category))];
         setCategories(uniqueCategories);
+        sessionStorage.setItem('shop_categories', JSON.stringify(uniqueCategories));
       }
     } catch (err) {
       console.error('Error fetching products:', err);

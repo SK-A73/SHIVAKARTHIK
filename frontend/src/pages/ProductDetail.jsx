@@ -80,7 +80,7 @@ const ProductDetail = () => {
       ? product.image_url
       : product.image_url.startsWith('sample_')
         ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop'
-        : `http://localhost:5000/uploads/products/${product.image_url}`
+        : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://shivakarthik.onrender.com'}/uploads/products/${product.image_url}`
     : 'https://via.placeholder.com/600?text=No+Image';
 
   const isOutOfStock = product.stock <= 0;
@@ -113,13 +113,6 @@ const ProductDetail = () => {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem' }}>
                 <span className="badge badge-featured">{product.category}</span>
-                <span className={`badge ${isOutOfStock ? 'badge-outofstock' : 'badge-stock'}`}>
-                  {isOutOfStock ? (
-                    <><AlertTriangle size={14} /> Out of Stock</>
-                  ) : (
-                    <><CheckCircle2 size={14} /> In Stock ({product.stock} available)</>
-                  )}
-                </span>
               </div>
 
               <h1 style={{ fontSize: '2.5rem', marginBottom: '0.75rem', fontFamily: 'var(--font-heading)', color: 'var(--color-maroon)' }}>{product.name}</h1>

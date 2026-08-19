@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://shivakarthik.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://shivakarthik.onrender.com/api',
   timeout: 10000
 });
 

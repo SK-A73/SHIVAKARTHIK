@@ -26,14 +26,37 @@ const runQuery = async (sql, params = []) => {
   return result;
 };
 
+const mapCamel = (row) => {
+  if (!row) return row;
+  const colMap = {
+    createdat: 'createdAt',
+    updatedat: 'updatedAt',
+    customername: 'customerName',
+    totalamount: 'totalAmount',
+    orderid: 'orderId',
+    productid: 'productId',
+    productname: 'productName',
+    shopname: 'shopName',
+    whatsappnumber: 'whatsappNumber'
+  };
+  const newRow = { ...row };
+  for (let key in newRow) {
+    if (colMap[key]) {
+      newRow[colMap[key]] = newRow[key];
+      delete newRow[key];
+    }
+  }
+  return newRow;
+};
+
 const getQuery = async (sql, params = []) => {
   const result = await pool.query(formatSql(sql), params);
-  return result.rows[0];
+  return mapCamel(result.rows[0]);
 };
 
 const allQuery = async (sql, params = []) => {
   const result = await pool.query(formatSql(sql), params);
-  return result.rows;
+  return result.rows.map(mapCamel);
 };
 
 const initDatabase = async () => {
