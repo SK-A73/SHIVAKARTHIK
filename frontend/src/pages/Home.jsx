@@ -16,6 +16,7 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState(null);
   const [settings, setSettings] = useState(null);
 
@@ -53,8 +54,9 @@ const Home = () => {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (attempt = 1) => {
     setLoading(true);
+    setError(null);
     try {
       const res = await API.get('/products');
       if (res.data.success) {
@@ -62,10 +64,16 @@ const Home = () => {
         const uniqueCategories = ['All', ...new Set(res.data.products.map(p => p.category))];
         setCategories(uniqueCategories);
       }
-    } catch (err) {
-      console.error('Error fetching products:', err);
-    } finally {
       setLoading(false);
+    } catch (err) {
+      console.error(`Error fetching products (Attempt ${attempt}):`, err);
+      if (attempt < 3) {
+        const delay = attempt * 1500; // 1.5s then 3s
+        setTimeout(() => fetchProducts(attempt + 1), delay);
+      } else {
+        setError('Unable to load products. Please check your connection.');
+        setLoading(false);
+      }
     }
   };
 
@@ -143,6 +151,19 @@ const Home = () => {
           {loading ? (
             <div style={{ textAlign: 'center', padding: '5rem 0', color: 'var(--color-gold-deep)', fontSize: '1.1rem', fontFamily: 'var(--font-accent)' }}>
               ✨ Loading handcrafted idols...
+            </div>
+          ) : error ? (
+            <div className="luxury-card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#FFFFFF' }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>⚠️</div>
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1.5rem', fontFamily: 'var(--font-heading)' }}>Connection Error</h3>
+              <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>{error}</p>
+              <button 
+                onClick={() => fetchProducts(1)}
+                className="btn-gold-primary" 
+                style={{ padding: '0.75rem 2rem', fontSize: '1rem', cursor: 'pointer' }}
+              >
+                Try Again
+              </button>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="luxury-card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#FFFFFF' }}>

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://shivakarthik.onrender.com/api',
-  timeout: 10000
+  timeout: 60000 // Increased from 10s to 60s to allow Render cold starts
 });
 
 // Interceptor to attach Authorization header if token exists in localStorage
