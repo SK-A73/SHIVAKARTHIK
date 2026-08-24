@@ -149,13 +149,8 @@ const Home = () => {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '6rem 0' }}>
-              <div className="beautiful-loader">
-                <span className="beautiful-loader-icon">✨</span>
-                <span style={{ color: 'var(--color-gold-deep)', fontSize: '1.1rem', fontFamily: 'var(--font-accent)', letterSpacing: '0.05em' }}>
-                  Loading handcrafted idols...
-                </span>
-              </div>
+            <div style={{ textAlign: 'center', padding: '5rem 0', color: 'var(--color-gold-deep)', fontSize: '1.1rem', fontFamily: 'var(--font-accent)' }}>
+              ✨ Loading handcrafted idols...
             </div>
           ) : error ? (
             <div className="luxury-card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#FFFFFF' }}>
