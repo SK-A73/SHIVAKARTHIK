@@ -143,7 +143,7 @@ const Home = () => {
             <h2 style={{ fontSize: '1.85rem' }}>
               {selectedCategory === 'All' ? 'Sacred Ganesha Catalog' : `${selectedCategory} Collection`}
               <span style={{ fontSize: '1rem', color: 'var(--color-text-light)', marginLeft: '0.85rem', fontWeight: 'normal', fontFamily: 'var(--font-body)' }}>
-                ({filteredProducts.length} items)
+                
               </span>
             </h2>
           </div>
