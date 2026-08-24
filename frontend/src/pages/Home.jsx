@@ -142,15 +142,24 @@ const Home = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1.85rem' }}>
               {selectedCategory === 'All' ? 'Sacred Ganesha Catalog' : `${selectedCategory} Collection`}
-              <span style={{ fontSize: '1rem', color: 'var(--color-text-light)', marginLeft: '0.85rem', fontWeight: 'normal', fontFamily: 'var(--font-body)' }}>
-                ({filteredProducts.length} items)
-              </span>
+              {!loading && (
+                <span style={{ fontSize: '1rem', color: 'var(--color-text-light)', marginLeft: '0.85rem', fontWeight: 'normal', fontFamily: 'var(--font-body)' }}>
+                  ({filteredProducts.length} items)
+                </span>
+              )}
             </h2>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '5rem 0', color: 'var(--color-gold-deep)', fontSize: '1.1rem', fontFamily: 'var(--font-accent)' }}>
-              ✨ Loading handcrafted idols...
+            <div className="divine-loader-container">
+              <div className="divine-loader-icon">
+                <div className="divine-loader-ring"></div>
+                <div className="divine-loader-sparkles"></div>
+                <div className="divine-loader-center">🪔</div>
+              </div>
+              <div className="divine-loader-text">
+                Discovering divine<br/>collections...
+              </div>
             </div>
           ) : error ? (
             <div className="luxury-card" style={{ padding: '4rem 2rem', textAlign: 'center', background: '#FFFFFF' }}>
