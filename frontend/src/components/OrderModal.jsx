@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import API from '../api/client';
 import { X, MessageSquare, Plus, Minus, User, Phone, ShoppingBag, Sparkles } from 'lucide-react';
+import { trackWhatsAppOrderClick } from '../utils/analytics';
 
 const OrderModal = ({ product, onClose }) => {
   const [customerName, setCustomerName] = useState('');
@@ -37,6 +38,13 @@ const OrderModal = ({ product, onClose }) => {
 
       if (response.data.success) {
         const { whatsappUrl } = response.data.order;
+        trackWhatsAppOrderClick({
+          product_id: product.id,
+          product_name: product.name,
+          category: product.category,
+          quantity: quantity,
+          total_amount: product.price * quantity
+        });
         // Immediately redirect customer to WhatsApp
         window.open(whatsappUrl, '_blank');
         onClose();

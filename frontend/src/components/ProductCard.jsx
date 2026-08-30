@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Sparkles, AlertTriangle } from 'lucide-react';
+import { trackProductCardClick, trackProductDetailsClick, trackOrderNowClick } from '../utils/analytics';
 
 const ProductCard = ({ product, onOrderNow }) => {
   const navigate = useNavigate();
@@ -15,12 +16,41 @@ const ProductCard = ({ product, onOrderNow }) => {
 
   const isOutOfStock = product.stock <= 0;
 
+  const handleCardNavigation = () => {
+    trackProductCardClick({
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category
+    });
+    navigate(`/product/${product.id}`);
+  };
+
+  const handleDetailsClick = () => {
+    trackProductDetailsClick({
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category
+    });
+    navigate(`/product/${product.id}`);
+  };
+
+  const handleOrderClick = (e) => {
+    e.stopPropagation();
+    trackOrderNowClick({
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category,
+      price: product.price
+    });
+    onOrderNow(product);
+  };
+
   return (
     <div className="luxury-card product-card-luxury">
       <div 
         className="product-img-box" 
         style={{ cursor: 'pointer' }}
-        onClick={() => navigate(`/product/${product.id}`)}
+        onClick={handleCardNavigation}
       >
         <img 
           src={imageUrl} 
@@ -50,7 +80,7 @@ const ProductCard = ({ product, onOrderNow }) => {
         <h3 
           className="product-card-heading" 
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate(`/product/${product.id}`)}
+          onClick={handleCardNavigation}
         >
           {product.name}
         </h3>
@@ -63,7 +93,7 @@ const ProductCard = ({ product, onOrderNow }) => {
           
           <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
             <button
-              onClick={() => navigate(`/product/${product.id}`)}
+              onClick={handleDetailsClick}
               style={{
                 background: 'var(--color-cream)',
                 border: '1px solid var(--color-gold-primary)',
@@ -95,10 +125,7 @@ const ProductCard = ({ product, onOrderNow }) => {
                 alignItems: 'center',
                 gap: '0.25rem'
               }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onOrderNow(product);
-              }}
+              onClick={handleOrderClick}
             >
               <ShoppingCart size={14} /> Order Now
             </button>

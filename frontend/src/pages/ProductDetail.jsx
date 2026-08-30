@@ -6,6 +6,7 @@ import OrderModal from '../components/OrderModal';
 import ProductCard from '../components/ProductCard';
 import API from '../api/client';
 import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { trackViewProduct, trackOrderNowClick } from '../utils/analytics';
 
 import initialProducts from '../data/initialProducts.json';
 
@@ -54,6 +55,17 @@ const ProductDetail = () => {
     }
     fetchProductDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (product) {
+      trackViewProduct({
+        product_id: product.id,
+        product_name: product.name,
+        category: product.category,
+        price: product.price
+      });
+    }
+  }, [product?.id]);
 
   const fetchProductDetails = async () => {
     if (!product) setLoading(true);
@@ -173,7 +185,15 @@ const ProductDetail = () => {
                   className="btn-whatsapp-gold"
                   style={{ padding: '1.1rem 2rem', fontSize: '1.15rem', opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
                   disabled={isOutOfStock}
-                  onClick={() => setShowOrderModal(true)}
+                  onClick={() => {
+                    trackOrderNowClick({
+                      product_id: product.id,
+                      product_name: product.name,
+                      category: product.category,
+                      price: product.price
+                    });
+                    setShowOrderModal(true);
+                  }}
                 >
                   <MessageSquare size={22} /> Order Now via WhatsApp
                 </button>

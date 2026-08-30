@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import API from '../api/client';
 import useScrollRestoration from '../hooks/useScrollRestoration';
 import { Sparkles, Layers } from 'lucide-react';
+import { trackCategorySelected, trackProductSearch } from '../utils/analytics';
 
 import initialProducts from '../data/initialProducts.json';
 import initialSettings from '../data/initialSettings.json';
@@ -63,6 +64,16 @@ const Home = () => {
 
   useEffect(() => {
     sessionStorage.setItem('shop_searchTerm', searchTerm);
+  }, [searchTerm]);
+
+  // Debounced search tracking (avoids sending events on every keystroke)
+  useEffect(() => {
+    if (searchTerm && searchTerm.trim().length >= 2) {
+      const handler = setTimeout(() => {
+        trackProductSearch(searchTerm.trim());
+      }, 1000);
+      return () => clearTimeout(handler);
+    }
   }, [searchTerm]);
 
   // Fetch fresh data in the background to seamlessly revalidate
@@ -147,7 +158,10 @@ const Home = () => {
                 <button
                   key={cat}
                   className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => {
+                    trackCategorySelected(cat);
+                    setSelectedCategory(cat);
+                  }}
                 >
                   {cat}
                 </button>
