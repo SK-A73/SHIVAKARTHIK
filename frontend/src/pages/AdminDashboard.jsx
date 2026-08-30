@@ -99,7 +99,12 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const res = await API.get('/products?includeHidden=true');
-      if (res.data.success) setProducts(res.data.products);
+      if (res.data.success) {
+        setProducts(res.data.products);
+        try {
+          localStorage.setItem('cached_products', JSON.stringify(res.data.products.filter(p => !p.hidden)));
+        } catch (e) {}
+      }
     } catch (err) {
       console.error('Error fetching products:', err);
     } finally {

@@ -8,17 +8,45 @@ import API from '../api/client';
 import useScrollRestoration from '../hooks/useScrollRestoration';
 import { Sparkles, Layers } from 'lucide-react';
 
+import initialProducts from '../data/initialProducts.json';
+import initialSettings from '../data/initialSettings.json';
+
+const getInitialProducts = () => {
+  try {
+    const cached = localStorage.getItem('cached_products');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return initialProducts || [];
+};
+
+const getInitialSettings = () => {
+  try {
+    const cached = localStorage.getItem('cached_settings');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed) return parsed;
+    }
+  } catch (e) {}
+  return initialSettings || null;
+};
+
 const Home = () => {
   // Restore scroll position when returning from Product Detail
   useScrollRestoration();
 
-  // Products always come fresh from the API — never cached
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
-  const [loading, setLoading] = useState(true);
+  // Instant landing: Initialize immediately from cache or bundled initial data
+  const [products, setProducts] = useState(getInitialProducts);
+  const [categories, setCategories] = useState(() => {
+    const list = getInitialProducts();
+    return ['All', ...new Set(list.map(p => p.category))];
+  });
+  const [loading, setLoading] = useState(() => getInitialProducts().length === 0);
   const [error, setError] = useState(null);
   const [selectedProductForOrder, setSelectedProductForOrder] = useState(null);
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState(getInitialSettings);
 
   // Preserve filter state in sessionStorage so Back navigation keeps the selection
   const [selectedCategory, setSelectedCategory] = useState(
@@ -37,7 +65,7 @@ const Home = () => {
     sessionStorage.setItem('shop_searchTerm', searchTerm);
   }, [searchTerm]);
 
-  // Always fetch fresh product data on every mount
+  // Fetch fresh data in the background to seamlessly revalidate
   useEffect(() => {
     fetchSettings();
     fetchProducts();
@@ -48,6 +76,9 @@ const Home = () => {
       const res = await API.get('/settings');
       if (res.data.success) {
         setSettings(res.data.settings);
+        try {
+          localStorage.setItem('cached_settings', JSON.stringify(res.data.settings));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
@@ -55,7 +86,10 @@ const Home = () => {
   };
 
   const fetchProducts = async (attempt = 1) => {
-    setLoading(true);
+    // If we already have products displayed, don't show full-page loading blocker
+    if (products.length === 0) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const res = await API.get('/products');
@@ -63,6 +97,9 @@ const Home = () => {
         setProducts(res.data.products);
         const uniqueCategories = ['All', ...new Set(res.data.products.map(p => p.category))];
         setCategories(uniqueCategories);
+        try {
+          localStorage.setItem('cached_products', JSON.stringify(res.data.products));
+        } catch (e) {}
       }
       setLoading(false);
     } catch (err) {
@@ -71,7 +108,9 @@ const Home = () => {
         const delay = attempt * 1500; // 1.5s then 3s
         setTimeout(() => fetchProducts(attempt + 1), delay);
       } else {
-        setError('Unable to load products. Please check your connection.');
+        if (products.length === 0) {
+          setError('Unable to load products. Please check your connection.');
+        }
         setLoading(false);
       }
     }

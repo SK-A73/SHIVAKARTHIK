@@ -7,23 +7,56 @@ import ProductCard from '../components/ProductCard';
 import API from '../api/client';
 import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
 
+import initialProducts from '../data/initialProducts.json';
+
+const getProductFromCacheOrInitial = (id) => {
+  try {
+    const cached = localStorage.getItem('cached_products');
+    if (cached) {
+      const list = JSON.parse(cached);
+      const found = list.find(p => String(p.id) === String(id));
+      if (found) return found;
+    }
+  } catch (e) {}
+  return initialProducts.find(p => String(p.id) === String(id)) || null;
+};
+
+const getRelatedFromCacheOrInitial = (currentProduct) => {
+  if (!currentProduct) return [];
+  try {
+    const cached = localStorage.getItem('cached_products');
+    const list = cached ? JSON.parse(cached) : initialProducts;
+    return list.filter(p => p.category === currentProduct.category && String(p.id) !== String(currentProduct.id)).slice(0, 3);
+  } catch (e) {
+    return [];
+  }
+};
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  
+  const initialProduct = getProductFromCacheOrInitial(id);
+  const [product, setProduct] = useState(initialProduct);
+  const [relatedProducts, setRelatedProducts] = useState(() => getRelatedFromCacheOrInitial(initialProduct));
+  const [loading, setLoading] = useState(!initialProduct);
   const [error, setError] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
 
   useEffect(() => {
     // PATCH 2 & 4: Always scroll to top smoothly when this page opens
     window.scrollTo({ top: 0, behavior: 'instant' });
+    const p = getProductFromCacheOrInitial(id);
+    if (p) {
+      setProduct(p);
+      setRelatedProducts(getRelatedFromCacheOrInitial(p));
+      setLoading(false);
+    }
     fetchProductDetails();
   }, [id]);
 
   const fetchProductDetails = async () => {
-    setLoading(true);
+    if (!product) setLoading(true);
     try {
       const res = await API.get(`/products/${id}`);
       if (res.data.success) {
@@ -32,16 +65,19 @@ const ProductDetail = () => {
         const allRes = await API.get('/products');
         if (allRes.data.success) {
           const related = allRes.data.products.filter(
-            p => p.category === res.data.product.category && p.id !== res.data.product.id
+            p => p.category === res.data.product.category && String(p.id) !== String(res.data.product.id)
           );
           setRelatedProducts(related.slice(0, 3));
+          try {
+            localStorage.setItem('cached_products', JSON.stringify(allRes.data.products));
+          } catch (e) {}
         }
       } else {
-        setError('Product not found.');
+        if (!product) setError('Product not found.');
       }
     } catch (err) {
       console.error('Failed to load product detail:', err);
-      setError('Product not found or has been removed.');
+      if (!product) setError('Product not found or has been removed.');
     } finally {
       setLoading(false);
     }
