@@ -29,8 +29,8 @@ const Hero = ({ shopName }) => {
           {brandTitle}
         </h1>
 
-        <p className="hero-subheading">
-          Premium Handcrafted Ganesha Idols for Every Celebration. Discover our exquisite traditional collection crafted with divine elegance.
+        <p className="hero-subheading" style={{ fontSize: '1.35rem' }}>
+          Get your online orders delivered straight to your door bookings close before 12/SEP/2016
         </p>
 
         <div className="hero-cta-wrap">
