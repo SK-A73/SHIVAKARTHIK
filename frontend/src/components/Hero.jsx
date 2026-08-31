@@ -30,7 +30,7 @@ const Hero = ({ shopName }) => {
         </h1>
 
         <p className="hero-subheading" style={{ fontSize: '1.35rem' }}>
-          Get your online orders delivered straight to your door bookings close before 12/SEP/2016
+          Get your online orders delivered straight to your door bookings close before 12/09/26
         </p>
 
         <div className="hero-cta-wrap">
