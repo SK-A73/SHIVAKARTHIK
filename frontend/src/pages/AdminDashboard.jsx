@@ -22,7 +22,13 @@ import {
   XCircle,
   Save,
   X,
-  Sparkles
+  Sparkles,
+  User,
+  Phone,
+  Calendar,
+  ArrowLeft,
+  MessageSquare,
+  MapPin
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -240,11 +246,49 @@ const AdminDashboard = () => {
     try {
       await API.put(`/orders/${orderId}/status`, { status: newStatus });
       setNotice(`Order ${orderId} updated to ${newStatus}`);
+      setSelectedOrder(prev => (prev && prev.id === orderId ? { ...prev, status: newStatus } : prev));
       fetchOrders();
     } catch (err) {
       console.error('Order status update error:', err);
       alert('Failed to update status.');
     }
+  };
+
+  const handleOpenOrderDetails = async (order) => {
+    setSelectedOrder(order);
+    if (!order.items || order.items.length === 0) {
+      try {
+        const res = await API.get(`/orders/${order.id}`);
+        if (res.data.success && res.data.order) {
+          setSelectedOrder(res.data.order);
+        }
+      } catch (err) {
+        console.error('Failed to load full order details:', err);
+      }
+    }
+  };
+
+  const resolveOrderItemImage = (item) => {
+    let raw = item?.image_url || item?.imageUrl;
+    if (!raw && item?.productId) {
+      const match = products.find(p => p.id === item.productId || String(p.id) === String(item.productId));
+      if (match) raw = match.image_url;
+    }
+    if (!raw) return 'https://via.placeholder.com/80?text=Ganesha';
+    if (raw.startsWith('http')) return raw;
+    if (raw.startsWith('sample_')) return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&auto=format&fit=crop';
+    const apiBase = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://shivakarthik.onrender.com';
+    return `${apiBase}/uploads/products/${raw}`;
+  };
+
+  const resolveOrderItemCategory = (item) => {
+    if (item?.category) return item.category;
+    if (item?.variant) return item.variant;
+    if (item?.productId) {
+      const match = products.find(p => p.id === item.productId || String(p.id) === String(item.productId));
+      if (match?.category) return match.category;
+    }
+    return null;
   };
 
   const handleSettingsSubmit = async (e) => {
@@ -539,8 +583,9 @@ const AdminDashboard = () => {
                           </td>
                           <td>
                             <button
-                              onClick={() => setSelectedOrder(o)}
-                              style={{ background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', padding: '0.35rem 0.75rem', borderRadius: '4px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                              onClick={() => handleOpenOrderDetails(o)}
+                              style={{ background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', color: 'var(--color-maroon)', padding: '0.35rem 0.75rem', borderRadius: '4px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
+                              title="View Order Details"
                             >
                               <Eye size={14} /> Details
                             </button>
@@ -776,37 +821,435 @@ const AdminDashboard = () => {
       {/* ORDER DETAILS MODAL */}
       {selectedOrder && (
         <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-          <div className="modal-content-luxury" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid rgba(199,154,59,0.25)', paddingBottom: '0.75rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontFamily: 'var(--font-heading)', color: 'var(--color-maroon)' }}>Order Summary</h2>
-              <button onClick={() => setSelectedOrder(null)} style={{ background: 'none', color: 'var(--color-maroon)' }}><X size={20} /></button>
-            </div>
-
-            <div style={{ marginBottom: '1.25rem', fontSize: '0.9rem', lineHeight: '1.7', background: 'var(--color-cream)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-gold-primary)' }}>
-              <p><strong>Order ID:</strong> <span style={{ color: 'var(--color-maroon)' }}>{selectedOrder.id}</span></p>
-              <p><strong>Customer:</strong> {selectedOrder.customerName}</p>
-              <p><strong>Phone:</strong> {selectedOrder.phone}</p>
-              <p><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
-              <p><strong>Status:</strong> <span className="badge badge-featured">{selectedOrder.status}</span></p>
-            </div>
-
-            <h4 style={{ marginBottom: '0.5rem', color: 'var(--color-maroon)', fontFamily: 'var(--font-heading)' }}>Ordered Items:</h4>
-            <div style={{ background: 'var(--color-cream)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid var(--color-gold-primary)' }}>
-              {selectedOrder.items?.map((item) => (
-                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                  <span>{item.productName} (x{item.quantity})</span>
-                  <span style={{ fontWeight: 600 }}>₹{item.total.toLocaleString('en-IN')}</span>
+          <div
+            className="modal-content-luxury"
+            style={{ maxWidth: '680px', width: '100%', maxHeight: '90vh', padding: '2rem', overflowY: 'auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1.5rem',
+                borderBottom: '1px solid rgba(199, 154, 59, 0.25)',
+                paddingBottom: '0.85rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  style={{
+                    background: 'var(--color-cream)',
+                    border: '1px solid var(--color-gold-primary)',
+                    color: 'var(--color-maroon)',
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                  title="Back to Orders List"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-heading)', color: 'var(--color-maroon)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <Package size={20} color="var(--color-gold-deep)" /> Order Details
+                  </h2>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-gold-deep)', fontWeight: 600 }}>
+                    #{selectedOrder.id}
+                  </span>
                 </div>
-              ))}
-              <div style={{ borderTop: '1px solid rgba(199,154,59,0.3)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.1rem', color: 'var(--color-maroon)' }}>
-                <span>Total Amount:</span>
-                <span>₹{selectedOrder.totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                style={{
+                  background: 'var(--color-cream)',
+                  border: '1px solid var(--color-gold-primary)',
+                  color: 'var(--color-maroon)',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Information Grid: Order Info & Customer Info */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '1rem',
+                marginBottom: '1.5rem'
+              }}
+            >
+              {/* Box 1: Order Information */}
+              <div
+                style={{
+                  background: 'var(--color-cream)',
+                  padding: '1.15rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-gold-primary)'
+                }}
+              >
+                <h4
+                  style={{
+                    margin: '0 0 0.65rem 0',
+                    color: 'var(--color-maroon)',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: '0.98rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <Clock size={16} color="var(--color-gold-deep)" /> Order Information
+                </h4>
+                <div style={{ fontSize: '0.88rem', lineHeight: '1.8' }}>
+                  <div>
+                    <strong style={{ color: 'var(--color-text)' }}>Order ID:</strong>{' '}
+                    <span style={{ color: 'var(--color-maroon)', fontWeight: 700 }}>{selectedOrder.id}</span>
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--color-text)' }}>Date & Time:</strong>{' '}
+                    <span>
+                      {selectedOrder.createdAt
+                        ? new Date(selectedOrder.createdAt).toLocaleString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>Status:</strong>
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) => handleOrderStatusUpdate(selectedOrder.id, e.target.value)}
+                      style={{
+                        padding: '0.2rem 0.55rem',
+                        fontSize: '0.82rem',
+                        borderRadius: '4px',
+                        border: '1px solid var(--color-gold-primary)',
+                        background: '#FFFFFF',
+                        color: 'var(--color-maroon)',
+                        fontWeight: 600
+                      }}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div style={{ marginTop: '0.25rem' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>Order Total:</strong>{' '}
+                    <span style={{ color: 'var(--color-gold-deep)', fontWeight: 800, fontSize: '1.05rem' }}>
+                      ₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 2: Customer Information */}
+              <div
+                style={{
+                  background: 'var(--color-cream)',
+                  padding: '1.15rem',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-gold-primary)'
+                }}
+              >
+                <h4
+                  style={{
+                    margin: '0 0 0.65rem 0',
+                    color: 'var(--color-maroon)',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: '0.98rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <User size={16} color="var(--color-gold-deep)" /> Customer Information
+                </h4>
+                <div style={{ fontSize: '0.88rem', lineHeight: '1.8' }}>
+                  <div>
+                    <strong style={{ color: 'var(--color-text)' }}>Customer Name:</strong>{' '}
+                    <span style={{ fontWeight: 600 }}>{selectedOrder.customerName || 'N/A'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>Phone:</strong>{' '}
+                    <span>{selectedOrder.phone || 'N/A'}</span>
+                    {selectedOrder.phone && (
+                      <a
+                        href={`https://wa.me/${selectedOrder.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#059669',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '4px'
+                        }}
+                        title="Direct WhatsApp with customer"
+                      >
+                        <MessageSquare size={12} /> WhatsApp
+                      </a>
+                    )}
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--color-text)' }}>Delivery / Address:</strong>{' '}
+                    <span style={{ color: 'var(--color-text-muted)' }}>
+                      {selectedOrder.address ||
+                        selectedOrder.deliveryAddress ||
+                        selectedOrder.shippingAddress ||
+                        selectedOrder.customerAddress ||
+                        'Coordinated via WhatsApp (Direct Delivery)'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <button className="btn-gold-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setSelectedOrder(null)}>
-              Close Details
-            </button>
+            {/* Ordered Products Section */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.75rem'
+                }}
+              >
+                <h4
+                  style={{
+                    margin: 0,
+                    color: 'var(--color-maroon)',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: '1.05rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <ShoppingCart size={16} color="var(--color-gold-deep)" /> Ordered Products
+                </h4>
+                <span className="badge badge-featured" style={{ fontSize: '0.75rem' }}>
+                  {selectedOrder.items && selectedOrder.items.length > 0
+                    ? `${selectedOrder.items.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0)} items`
+                    : '1 item'}
+                </span>
+              </div>
+
+              {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                <div
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(199, 154, 59, 0.3)',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {selectedOrder.items.map((item, idx) => {
+                    const itemImg = resolveOrderItemImage(item);
+                    const itemCat = resolveOrderItemCategory(item);
+                    const qty = Number(item.quantity) || 1;
+                    const unitPrice = Number(item.price || (item.total && qty ? item.total / qty : 0));
+                    const subtotal = Number(item.total || unitPrice * qty);
+
+                    return (
+                      <div
+                        key={item.id || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          padding: '0.85rem 1.15rem',
+                          borderBottom:
+                            idx < selectedOrder.items.length - 1
+                              ? '1px solid rgba(199, 154, 59, 0.15)'
+                              : 'none',
+                          background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 253, 247, 0.6)'
+                        }}
+                      >
+                        <img
+                          src={itemImg}
+                          alt={item.productName || 'Idol'}
+                          style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '8px',
+                            objectFit: 'contain',
+                            background: '#FFFFFF',
+                            border: '1px solid var(--color-gold-primary)',
+                            padding: '2px',
+                            flexShrink: 0
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src =
+                              'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=200&auto=format&fit=crop';
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              color: 'var(--color-maroon)',
+                              fontSize: '0.95rem'
+                            }}
+                          >
+                            {item.productName || 'Handcrafted Ganesha Idol'}
+                          </div>
+                          {itemCat && (
+                            <span
+                              className="badge badge-featured"
+                              style={{
+                                fontSize: '0.7rem',
+                                padding: '0.15rem 0.5rem',
+                                marginTop: '0.2rem',
+                                display: 'inline-block'
+                              }}
+                            >
+                              {itemCat}
+                            </span>
+                          )}
+                          <div
+                            style={{
+                              fontSize: '0.8rem',
+                              color: 'var(--color-text-muted)',
+                              marginTop: '0.2rem'
+                            }}
+                          >
+                            Unit Price: ₹{unitPrice.toLocaleString('en-IN')} × {qty}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Subtotal</div>
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              color: 'var(--color-gold-deep)',
+                              fontSize: '1.05rem'
+                            }}
+                          >
+                            ₹{subtotal.toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    color: 'var(--color-text-muted)',
+                    background: 'var(--color-cream)',
+                    borderRadius: '8px',
+                    border: '1px dashed var(--color-gold-primary)'
+                  }}
+                >
+                  <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, color: 'var(--color-maroon)' }}>
+                    Item breakdown for this order:
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.88rem' }}>
+                    Single item order recorded via WhatsApp checkout • Order Total: ₹
+                    {selectedOrder.totalAmount?.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Total Summary Breakdown */}
+            <div
+              style={{
+                background: 'var(--color-cream)',
+                padding: '1rem 1.25rem',
+                borderRadius: '8px',
+                border: '1px solid var(--color-gold-primary)',
+                marginBottom: '1.5rem'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.9rem',
+                  color: 'var(--color-text)',
+                  marginBottom: '0.35rem'
+                }}
+              >
+                <span>Total Items:</span>
+                <span style={{ fontWeight: 600 }}>
+                  {selectedOrder.items && selectedOrder.items.length > 0
+                    ? selectedOrder.items.reduce((sum, it) => sum + (Number(it.quantity) || 1), 0)
+                    : 1}
+                </span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderTop: '1px solid rgba(199, 154, 59, 0.3)',
+                  paddingTop: '0.65rem',
+                  marginTop: '0.35rem'
+                }}
+              >
+                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--color-maroon)' }}>
+                  Final Order Total:
+                </span>
+                <span
+                  style={{
+                    fontWeight: 800,
+                    fontSize: '1.35rem',
+                    color: 'var(--color-gold-deep)',
+                    fontFamily: 'var(--font-accent)'
+                  }}
+                >
+                  ₹{selectedOrder.totalAmount?.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn-gold-primary"
+                style={{ width: '100%', justifyContent: 'center', gap: '0.5rem', padding: '0.8rem' }}
+                onClick={() => setSelectedOrder(null)}
+              >
+                <ArrowLeft size={16} /> Back to Orders List
+              </button>
+            </div>
           </div>
         </div>
       )}

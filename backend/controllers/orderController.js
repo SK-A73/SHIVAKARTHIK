@@ -150,7 +150,10 @@ const getAllOrders = async (req, res, next) => {
 
     // Attach items for each order
     for (let order of orders) {
-      order.items = await allQuery(`SELECT * FROM OrderItems WHERE orderId = ?`, [order.id]);
+      order.items = await allQuery(
+        `SELECT oi.*, p.image_url, p.category FROM OrderItems oi LEFT JOIN Products p ON oi.productId = p.id WHERE oi.orderId = ?`,
+        [order.id]
+      );
     }
 
     return res.status(200).json({
@@ -175,7 +178,10 @@ const getOrderById = async (req, res, next) => {
       });
     }
 
-    order.items = await allQuery(`SELECT * FROM OrderItems WHERE orderId = ?`, [id]);
+    order.items = await allQuery(
+      `SELECT oi.*, p.image_url, p.category FROM OrderItems oi LEFT JOIN Products p ON oi.productId = p.id WHERE oi.orderId = ?`,
+      [id]
+    );
 
     return res.status(200).json({
       success: true,
