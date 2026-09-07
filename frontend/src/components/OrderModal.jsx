@@ -14,6 +14,41 @@ const OrderModal = ({ product, onClose }) => {
 
   const total = (product.price * quantity).toLocaleString('en-IN');
 
+  const generateWhatsAppUrl = (orderId = '') => {
+    const shopNumber = '919148572774';
+    const itemTotal = (product.price * quantity).toLocaleString('en-IN');
+    const unitPrice = product.price.toLocaleString('en-IN');
+
+    const message = 
+`Hello,
+
+I would like to place an order.
+
+${orderId ? `Order ID:\n${orderId}\n\n` : ''}Customer Name:
+${customerName.trim()}
+
+Phone Number:
+${phone.trim()}
+
+Product:
+${product.name}
+
+Quantity:
+${quantity}
+
+Price:
+₹${unitPrice}
+
+Total:
+₹${itemTotal}
+
+Please confirm my order.
+
+Thank you.`;
+
+    return `https://wa.me/${shopNumber}?text=${encodeURIComponent(message)}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!customerName.trim()) {
@@ -28,32 +63,68 @@ const OrderModal = ({ product, onClose }) => {
     setLoading(true);
     setError('');
 
+    // Pre-generate fallback WhatsApp URL
+    const fallbackWhatsappUrl = generateWhatsAppUrl();
+
+    // Check device type
+    const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // On desktop, open a window reference synchronously inside user click gesture to bypass popup blockers
+    let whatsappWindow = null;
+    if (!isMobile) {
+      try {
+        whatsappWindow = window.open('about:blank', '_blank');
+      } catch (err) {
+        whatsappWindow = null;
+      }
+    }
+
     try {
-      const response = await API.post('/orders', {
-        customerName: customerName.trim(),
-        phone: phone.trim(),
-        productId: product.id,
-        quantity: quantity
+      // Non-blocking analytics
+      trackWhatsAppOrderClick({
+        product_id: product.id,
+        product_name: product.name,
+        category: product.category,
+        quantity: quantity,
+        total_amount: product.price * quantity
       });
 
-      if (response.data.success) {
-        const { whatsappUrl } = response.data.order;
-        trackWhatsAppOrderClick({
-          product_id: product.id,
-          product_name: product.name,
-          category: product.category,
-          quantity: quantity,
-          total_amount: product.price * quantity
+      let finalUrl = fallbackWhatsappUrl;
+
+      // Post order to database
+      try {
+        const response = await API.post('/orders', {
+          customerName: customerName.trim(),
+          phone: phone.trim(),
+          productId: product.id,
+          quantity: quantity
         });
-        // Immediately redirect customer to WhatsApp
-        window.open(whatsappUrl, '_blank');
-        onClose();
-      } else {
-        setError(response.data.message || 'Failed to place order.');
+
+        if (response.data?.success && response.data.order?.whatsappUrl) {
+          finalUrl = response.data.order.whatsappUrl;
+        } else if (response.data?.success && response.data.order?.id) {
+          finalUrl = generateWhatsAppUrl(response.data.order.id);
+        }
+      } catch (apiErr) {
+        console.warn('Order database notification (continuing directly with WhatsApp order):', apiErr);
       }
+
+      // Open WhatsApp reliably across desktop and mobile Chrome/Safari
+      if (whatsappWindow && !whatsappWindow.closed) {
+        whatsappWindow.location.href = finalUrl;
+      } else {
+        window.location.href = finalUrl;
+      }
+
+      onClose();
     } catch (err) {
-      console.error('Order submission error:', err);
-      setError(err.response?.data?.message || 'Server error. Please try again.');
+      console.error('Order process error:', err);
+      if (whatsappWindow && !whatsappWindow.closed) {
+        whatsappWindow.location.href = fallbackWhatsappUrl;
+      } else {
+        window.location.href = fallbackWhatsappUrl;
+      }
+      onClose();
     } finally {
       setLoading(false);
     }
