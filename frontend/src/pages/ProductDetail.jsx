@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import OrderModal from '../components/OrderModal';
 import ProductCard from '../components/ProductCard';
 import API from '../api/client';
-import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, ZoomIn, X } from 'lucide-react';
 import { trackViewProduct, trackOrderNowClick } from '../utils/analytics';
 
 import initialProducts from '../data/initialProducts.json';
@@ -43,6 +43,26 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(!initialProduct);
   const [error, setError] = useState('');
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
+
+  useEffect(() => {
+    if (isImageOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setIsImageOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isImageOpen]);
 
   useEffect(() => {
     // PATCH 2 & 4: Always scroll to top smoothly when this page opens
@@ -147,7 +167,20 @@ const ProductDetail = () => {
           </button>
 
           <div className="product-detail-grid luxury-card" style={{ padding: '2.5rem', background: '#FFFFFF' }}>
-            <div className="product-detail-gallery">
+            <div
+              className="product-detail-gallery"
+              onClick={() => setIsImageOpen(true)}
+              style={{ cursor: 'pointer', position: 'relative' }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsImageOpen(true);
+                }
+              }}
+              title="Click or tap to enlarge image"
+            >
               <img
                 src={imageUrl}
                 alt={product.name}
@@ -156,6 +189,27 @@ const ProductDetail = () => {
                   e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&auto=format&fit=crop';
                 }}
               />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  background: 'rgba(255, 253, 247, 0.95)',
+                  border: '1px solid var(--color-gold-primary)',
+                  borderRadius: '20px',
+                  padding: '0.35rem 0.75rem',
+                  fontSize: '0.78rem',
+                  color: 'var(--color-maroon)',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  pointerEvents: 'none'
+                }}
+              >
+                <ZoomIn size={14} color="var(--color-gold-deep)" /> Tap to enlarge
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -231,6 +285,99 @@ const ProductDetail = () => {
           product={product}
           onClose={() => setShowOrderModal(false)}
         />
+      )}
+
+      {/* Enlarged Image Lightbox Modal */}
+      {isImageOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setIsImageOpen(false)}
+          style={{
+            zIndex: 9999,
+            backgroundColor: 'rgba(12, 10, 8, 0.88)',
+            backdropFilter: 'blur(8px)',
+            padding: '1.25rem',
+            cursor: 'zoom-out'
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '92vw',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'default'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsImageOpen(false)}
+              aria-label="Close enlarged image"
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                background: 'rgba(255, 253, 247, 0.96)',
+                border: '1.5px solid var(--color-gold-primary)',
+                color: 'var(--color-maroon)',
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                zIndex: 10
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* High-Resolution Full-Size Image */}
+            <img
+              src={imageUrl}
+              alt={product.name}
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '82vh',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                border: '2px solid var(--color-gold-primary)',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6)',
+                background: '#FFFFFF',
+                display: 'block'
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=1200&auto=format&fit=crop';
+              }}
+            />
+
+            {/* Product Title Caption & Tap to close hint */}
+            <div
+              style={{
+                marginTop: '0.75rem',
+                color: '#FFFDF7',
+                fontSize: '0.92rem',
+                fontWeight: 600,
+                fontFamily: 'var(--font-heading)',
+                textAlign: 'center',
+                letterSpacing: '0.04em',
+                textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+              }}
+            >
+              {product.name} <span style={{ opacity: 0.75, fontWeight: 400, fontSize: '0.8rem' }}>• Tap outside or ✕ to close</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
