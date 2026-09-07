@@ -1,6 +1,8 @@
 const { runQuery, getQuery, allQuery } = require('../database/db');
 
-// Generate unique order ID: ORD-YYYYMMDD-XXXX
+const crypto = require('crypto');
+
+// Generate guaranteed unique order ID: ORD-YYYYMMDD-XXXXXX
 const generateOrderId = async () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -8,13 +10,27 @@ const generateOrderId = async () => {
   const day = String(today.getDate()).padStart(2, '0');
   const datePrefix = `ORD-${year}${month}${day}`;
 
-  const row = await getQuery(
-    `SELECT COUNT(*) as count FROM Orders WHERE id LIKE ?`,
-    [`${datePrefix}-%`]
-  );
+  let uniqueId = '';
+  let isUnique = false;
+  let attempts = 0;
 
-  const nextNumber = String(row.count + 1).padStart(4, '0');
-  return `${datePrefix}-${nextNumber}`;
+  while (!isUnique && attempts < 5) {
+    attempts++;
+    const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const timeDigits = Date.now().toString().slice(-4);
+    uniqueId = `${datePrefix}-${timeDigits}${randomHex}`;
+
+    const existing = await getQuery(`SELECT id FROM Orders WHERE id = ? LIMIT 1`, [uniqueId]);
+    if (!existing) {
+      isUnique = true;
+    }
+  }
+
+  if (!isUnique) {
+    uniqueId = `${datePrefix}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  }
+
+  return uniqueId;
 };
 
 const createOrder = async (req, res, next) => {
