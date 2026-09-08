@@ -67,6 +67,13 @@ const createOrder = async (req, res, next) => {
       });
     }
 
+    if (product.is_sold_out === 1 || product.is_sold_out === true) {
+      return res.status(400).json({
+        success: false,
+        message: 'This product is currently sold out and cannot be ordered.'
+      });
+    }
+
     const itemTotal = product.price * qty;
     const orderId = await generateOrderId();
 

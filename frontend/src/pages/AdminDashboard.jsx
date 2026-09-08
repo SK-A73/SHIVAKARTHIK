@@ -161,7 +161,8 @@ const AdminDashboard = () => {
         description: prod.description,
         stock: prod.stock,
         featured: prod.featured === 1,
-        hidden: prod.hidden === 1
+        hidden: prod.hidden === 1,
+        is_sold_out: prod.is_sold_out === 1 || prod.is_sold_out === true
       });
     } else {
       setEditingProduct(null);
@@ -172,7 +173,8 @@ const AdminDashboard = () => {
         description: '',
         stock: '',
         featured: false,
-        hidden: false
+        hidden: false,
+        is_sold_out: false
       });
     }
     setProductImageFile(null);
@@ -192,6 +194,7 @@ const AdminDashboard = () => {
       formData.append('stock', productForm.stock);
       formData.append('featured', productForm.featured);
       formData.append('hidden', productForm.hidden);
+      formData.append('is_sold_out', productForm.is_sold_out);
 
       if (productImageFile) {
         formData.append('image', productImageFile);
@@ -239,6 +242,19 @@ const AdminDashboard = () => {
       fetchProducts();
     } catch (err) {
       console.error('Visibility toggle error:', err);
+    }
+  };
+
+  const handleToggleSoldOut = async (id) => {
+    try {
+      const res = await API.patch(`/products/${id}/sold-out`);
+      if (res.data.success) {
+        setNotice(res.data.message);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error('Sold out toggle error:', err);
+      alert('Failed to update Sold Out status.');
     }
   };
 
@@ -473,27 +489,57 @@ const AdminDashboard = () => {
                             <td style={{ color: 'var(--color-gold-deep)', fontWeight: 700 }}>₹{p.price.toLocaleString('en-IN')}</td>
                             <td>{p.stock}</td>
                             <td>
-                              <span className={`badge ${p.hidden === 1 ? 'badge-outofstock' : 'badge-stock'}`}>
-                                {p.hidden === 1 ? 'Hidden' : 'Visible'}
-                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <span className={`badge ${p.hidden === 1 ? 'badge-outofstock' : 'badge-stock'}`}>
+                                  {p.hidden === 1 ? 'Hidden' : 'Visible'}
+                                </span>
+                                {(p.is_sold_out === 1 || p.is_sold_out === true) && (
+                                  <span className="badge badge-outofstock" style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #FCA5A5', fontSize: '0.72rem' }}>
+                                    Sold Out
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td>
-                              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                <button
+                                  onClick={() => handleToggleSoldOut(p.id)}
+                                  style={{
+                                    background: (p.is_sold_out === 1 || p.is_sold_out === true) ? 'rgba(220, 38, 38, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                    border: `1px solid ${(p.is_sold_out === 1 || p.is_sold_out === true) ? 'rgba(220, 38, 38, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+                                    padding: '0.35rem 0.6rem',
+                                    borderRadius: '4px',
+                                    fontSize: '0.8rem',
+                                    color: (p.is_sold_out === 1 || p.is_sold_out === true) ? '#dc2626' : '#059669',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 600
+                                  }}
+                                  title={(p.is_sold_out === 1 || p.is_sold_out === true) ? 'Click to make Available' : 'Click to mark as Sold Out'}
+                                >
+                                  {(p.is_sold_out === 1 || p.is_sold_out === true) ? (
+                                    <><CheckCircle2 size={14} /> Available</>
+                                  ) : (
+                                    <><XCircle size={14} /> Sold Out</>
+                                  )}
+                                </button>
                                 <button
                                   onClick={() => handleToggleVisibility(p.id)}
-                                  style={{ background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                  style={{ background: 'var(--color-cream)', border: '1px solid var(--color-gold-primary)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
                                 >
                                   {p.hidden === 1 ? <><Eye size={14} /> Show</> : <><EyeOff size={14} /> Hide</>}
                                 </button>
                                 <button
                                   onClick={() => handleOpenProductModal(p)}
-                                  style={{ background: 'rgba(37, 99, 235, 0.1)', border: '1px solid rgba(37, 99, 235, 0.3)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                  style={{ background: 'rgba(37, 99, 235, 0.1)', border: '1px solid rgba(37, 99, 235, 0.3)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
                                 >
                                   <Edit size={14} /> Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProduct(p.id)}
-                                  style={{ background: 'rgba(225, 29, 72, 0.1)', border: '1px solid rgba(225, 29, 72, 0.3)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: '#e11d48', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                  style={{ background: 'rgba(225, 29, 72, 0.1)', border: '1px solid rgba(225, 29, 72, 0.3)', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', color: '#e11d48', display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
                                 >
                                   <Trash2 size={14} /> Delete
                                 </button>
@@ -780,7 +826,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600 }}>
                   <input
                     type="checkbox"
@@ -797,6 +843,15 @@ const AdminDashboard = () => {
                     onChange={(e) => setProductForm({ ...productForm, hidden: e.target.checked })}
                   />
                   Hide from Store
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600, color: '#DC2626' }}>
+                  <input
+                    type="checkbox"
+                    checked={productForm.is_sold_out}
+                    onChange={(e) => setProductForm({ ...productForm, is_sold_out: e.target.checked })}
+                  />
+                  Mark as Sold Out
                 </label>
               </div>
 

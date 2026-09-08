@@ -12,7 +12,7 @@ const OrderModal = ({ product, onClose }) => {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderData, setPlacedOrderData] = useState(null);
 
-  if (!product) return null;
+  if (!product || product.is_sold_out === 1 || product.is_sold_out === true) return null;
 
   const total = (product.price * quantity).toLocaleString('en-IN');
 

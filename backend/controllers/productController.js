@@ -100,9 +100,10 @@ const createProduct = async (req, res, next) => {
     }
 
     // --- STEP 3: Insert product into PostgreSQL with the Supabase Storage URL ---
+    const isSoldOutVal = req.body.is_sold_out === 'true' || req.body.is_sold_out === '1' || req.body.is_sold_out === 1 || req.body.is_sold_out === true ? 1 : 0;
     const result = await runQuery(
-      `INSERT INTO Products (name, category, price, description, image_url, cloudinary_public_id, stock, featured, hidden)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      `INSERT INTO Products (name, category, price, description, image_url, cloudinary_public_id, stock, featured, hidden, is_sold_out)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         name,
         category,
@@ -112,7 +113,8 @@ const createProduct = async (req, res, next) => {
         storage_path,
         parseInt(stock || 0, 10),
         featured === 'true' || featured === '1' || featured === true ? 1 : 0,
-        hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0
+        hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0,
+        isSoldOutVal
       ]
     );
 
@@ -184,10 +186,13 @@ const updateProduct = async (req, res, next) => {
     const updatedStock = stock !== undefined ? parseInt(stock, 10) : existingProduct.stock;
     const updatedFeatured = featured !== undefined ? (featured === 'true' || featured === '1' || featured === true ? 1 : 0) : existingProduct.featured;
     const updatedHidden = hidden !== undefined ? (hidden === 'true' || hidden === '1' || hidden === true ? 1 : 0) : existingProduct.hidden;
+    const updatedSoldOut = req.body.is_sold_out !== undefined
+      ? (req.body.is_sold_out === 'true' || req.body.is_sold_out === '1' || req.body.is_sold_out === 1 || req.body.is_sold_out === true ? 1 : 0)
+      : (existingProduct.is_sold_out === 1 ? 1 : 0);
 
     await runQuery(
-      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, updatedat = CURRENT_TIMESTAMP WHERE id = ?`,
-      [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, storage_path, updatedStock, updatedFeatured, updatedHidden, id]
+      `UPDATE Products SET name = ?, category = ?, price = ?, description = ?, image_url = ?, cloudinary_public_id = ?, stock = ?, featured = ?, hidden = ?, is_sold_out = ?, updatedat = CURRENT_TIMESTAMP WHERE id = ?`,
+      [updatedName, updatedCategory, updatedPrice, updatedDesc, image_url, storage_path, updatedStock, updatedFeatured, updatedHidden, updatedSoldOut, id]
     );
 
     const updatedProduct = await getQuery(`SELECT * FROM Products WHERE id = ?`, [id]);
@@ -259,11 +264,42 @@ const toggleVisibility = async (req, res, next) => {
   }
 };
 
+const toggleSoldOut = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await getQuery(`SELECT * FROM Products WHERE id = ?`, [id]);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found.'
+      });
+    }
+
+    const currentSoldOut = product.is_sold_out === 1 || product.is_sold_out === true ? 1 : 0;
+    const newSoldOutState = currentSoldOut === 1 ? 0 : 1;
+
+    await runQuery(
+      `UPDATE Products SET is_sold_out = ?, updatedat = CURRENT_TIMESTAMP WHERE id = ?`,
+      [newSoldOutState, id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Product is now ${newSoldOutState === 1 ? 'marked as Sold Out' : 'marked as Available'}.`,
+      is_sold_out: newSoldOutState
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
-  toggleVisibility
+  toggleVisibility,
+  toggleSoldOut
 };

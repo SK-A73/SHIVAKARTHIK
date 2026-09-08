@@ -6,7 +6,8 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  toggleVisibility
+  toggleVisibility,
+  toggleSoldOut
 } = require('../controllers/productController');
 const authMiddleware = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -20,5 +21,6 @@ router.post('/', authMiddleware, upload.single('image'), createProduct);
 router.put('/:id', authMiddleware, upload.single('image'), updateProduct);
 router.delete('/:id', authMiddleware, deleteProduct);
 router.patch('/:id/visibility', authMiddleware, toggleVisibility);
+router.patch('/:id/sold-out', authMiddleware, toggleSoldOut);
 
 module.exports = router;

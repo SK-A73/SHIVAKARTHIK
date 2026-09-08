@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import OrderModal from '../components/OrderModal';
 import ProductCard from '../components/ProductCard';
 import API from '../api/client';
-import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, ZoomIn, X } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Sparkles, CheckCircle2, AlertTriangle, ShieldCheck, ZoomIn, X, ShoppingCart } from 'lucide-react';
 import { trackViewProduct, trackOrderNowClick } from '../utils/analytics';
 
 import initialProducts from '../data/initialProducts.json';
@@ -152,6 +152,7 @@ const ProductDetail = () => {
     : 'https://via.placeholder.com/600?text=No+Image';
 
   const isOutOfStock = product.stock <= 0;
+  const isSoldOut = product.is_sold_out === 1 || product.is_sold_out === true;
 
   return (
     <div className="app-container">
@@ -189,6 +190,33 @@ const ProductDetail = () => {
                   e.target.src = 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&auto=format&fit=crop';
                 }}
               />
+
+              {/* Prominent SOLD OUT badge over product image */}
+              {isSoldOut && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '14px',
+                    right: '14px',
+                    zIndex: 3,
+                    width: '105px',
+                    height: '90px',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <img
+                    src="/sold-out-badge.png"
+                    alt="Sold Out"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.3))'
+                    }}
+                  />
+                </div>
+              )}
+
               <div
                 style={{
                   position: 'absolute',
@@ -235,22 +263,47 @@ const ProductDetail = () => {
               </div>
 
               <div style={{ marginTop: 'auto' }}>
-                <button
-                  className="btn-whatsapp-gold"
-                  style={{ padding: '1.1rem 2rem', fontSize: '1.15rem', opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
-                  disabled={isOutOfStock}
-                  onClick={() => {
-                    trackOrderNowClick({
-                      product_id: product.id,
-                      product_name: product.name,
-                      category: product.category,
-                      price: product.price
-                    });
-                    setShowOrderModal(true);
-                  }}
-                >
-                  <MessageSquare size={22} /> Order Now via WhatsApp
-                </button>
+                {isSoldOut ? (
+                  <button
+                    disabled
+                    style={{
+                      padding: '1.1rem 2rem',
+                      fontSize: '1.15rem',
+                      background: '#9CA3AF',
+                      color: '#FFFFFF',
+                      border: '1px solid #9CA3AF',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'not-allowed',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      width: '100%',
+                      maxWidth: '380px'
+                    }}
+                    title="This product is currently Sold Out"
+                  >
+                    <ShoppingCart size={22} /> Currently Sold Out
+                  </button>
+                ) : (
+                  <button
+                    className="btn-whatsapp-gold"
+                    style={{ padding: '1.1rem 2rem', fontSize: '1.15rem', opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+                    disabled={isOutOfStock}
+                    onClick={() => {
+                      trackOrderNowClick({
+                        product_id: product.id,
+                        product_name: product.name,
+                        category: product.category,
+                        price: product.price
+                      });
+                      setShowOrderModal(true);
+                    }}
+                  >
+                    <MessageSquare size={22} /> Order Now via WhatsApp
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -267,8 +320,12 @@ const ProductDetail = () => {
                     key={p.id}
                     product={p}
                     onOrderNow={() => {
-                      setProduct(p);
-                      setShowOrderModal(true);
+                      if (p.is_sold_out === 1 || p.is_sold_out === true) {
+                        navigate(`/product/${p.id}`);
+                      } else {
+                        setProduct(p);
+                        setShowOrderModal(true);
+                      }
                     }}
                   />
                 ))}

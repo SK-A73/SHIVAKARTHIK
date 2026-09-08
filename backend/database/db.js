@@ -84,10 +84,14 @@ const initDatabase = async () => {
         stock INTEGER DEFAULT 0,
         featured INTEGER DEFAULT 0,
         hidden INTEGER DEFAULT 0,
+        is_sold_out INTEGER DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Ensure is_sold_out column exists for existing tables
+    await runQuery(`ALTER TABLE Products ADD COLUMN IF NOT EXISTS is_sold_out INTEGER DEFAULT 0;`);
 
     // Orders table
     await runQuery(`
